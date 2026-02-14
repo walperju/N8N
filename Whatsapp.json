@@ -1,0 +1,601 @@
+{
+  "name": "Whatsapp",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -560,
+        -160
+      ],
+      "id": "447bf3b7-824a-4978-82af-bb1a03667d24",
+      "name": "Webhook",
+      "webhookId": "31294dca-a604-4677-9891-6388a0dea901"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "93808fcd-1cba-40e7-a9b2-c0ed2cce56fc",
+              "name": "session",
+              "value": "={{ $json.body.session }}",
+              "type": "string"
+            },
+            {
+              "id": "ac89104d-5587-4c86-8137-e1ebb84589b3",
+              "name": "chatId",
+              "value": "={{ $json.body.payload.from }}",
+              "type": "string"
+            },
+            {
+              "id": "4384c61f-4cb3-435a-a1e0-734f59157245",
+              "name": "pushName",
+              "value": "={{ $json.body.payload._data.Info.PushName }}",
+              "type": "string"
+            },
+            {
+              "id": "5bb0d810-a979-49c8-b5f8-3defed2fb348",
+              "name": "payload_Id",
+              "value": "={{ $json.body.payload.id }}",
+              "type": "string"
+            },
+            {
+              "id": "4fb478c3-09ce-4d47-a77d-dd1d5d0f7359",
+              "name": "event",
+              "value": "={{ $json.body.event }}",
+              "type": "string"
+            },
+            {
+              "id": "31f13e74-ab7f-417f-ac03-f1db9890deb3",
+              "name": "message",
+              "value": "={{ $json.body.payload.body }}",
+              "type": "string"
+            },
+            {
+              "id": "486cceb0-3044-41d0-a905-426055fc7c6e",
+              "name": "fromMe",
+              "value": "={{ $json.body.payload.fromMe }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -352,
+        -160
+      ],
+      "id": "510f28c9-1364-4fba-9bfe-bbc03ce1f72f",
+      "name": "Dados"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "message",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "0986f63f-a76f-4974-9ff2-d9a613123f19"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -144,
+        -160
+      ],
+      "id": "91ab2537-2da7-4bee-8ca0-d98960dd977b",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "Você é um especialista em vagas de emprego remoto globais para analista de dados que ajusta os resumes e cover letters de acordo com a vaga encontrada e umm ótimo tradutor do português para o ingês e vice-versa."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        64,
+        -160
+      ],
+      "id": "a88997fc-65e2-46b6-8db0-cad65e310382",
+      "name": "AI Agent",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        48
+      ],
+      "id": "bb631054-18ca-4273-97a4-2097c6763e86",
+      "name": "Google Gemini Chat Model",
+      "retryOnFail": true,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IT91VAiFu8z6TyoK",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Dados').item.json.chatId }}",
+        "sessionTTL": 3600,
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        80,
+        48
+      ],
+      "id": "765b25b0-372a-4d42-acb5-fbb176f6872f",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "kTN4FRKdmceg39b3",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Seen",
+        "session": "={{ $('Dados').item.json.session }}",
+        "chatId": "={{ $('Dados').item.json.chatId }}",
+        "messageId": "={{ $('Dados').item.json.payload_Id }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        416,
+        -160
+      ],
+      "id": "7b837a79-4061-4e35-9c2f-007f3ea92fe7",
+      "name": "Send Seen",
+      "credentials": {
+        "wahaApi": {
+          "id": "nk6NXgYCDg05WsBg",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Dados').item.json.session }}",
+        "chatId": "={{ $('Dados').item.json.chatId }}",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-waha.WAHA",
+      "typeVersion": 202411,
+      "position": [
+        624,
+        -160
+      ],
+      "id": "236ea7e7-cab8-4b08-8491-f7b8bc3cce9f",
+      "name": "Send a text message",
+      "credentials": {
+        "wahaApi": {
+          "id": "nk6NXgYCDg05WsBg",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "078f6525-c53f-46f4-8f22-2703528afc22",
+              "name": "session",
+              "value": "={{ $('Dados').item.json.session }}",
+              "type": "string"
+            },
+            {
+              "id": "2f5945b6-b645-4ff3-9524-bf953f1b1e77",
+              "name": "chatId",
+              "value": "={{ $('Dados').item.json.chatId }}",
+              "type": "string"
+            },
+            {
+              "id": "61a8ccbf-5f2c-4ef2-aef8-7ea6ab046381",
+              "name": "pushName",
+              "value": "={{ $('Dados').item.json.pushName }}",
+              "type": "string"
+            },
+            {
+              "id": "e0c7a49a-a847-4b37-a679-172d82627ac0",
+              "name": "event",
+              "value": "={{ $('Dados').item.json.event }}",
+              "type": "string"
+            },
+            {
+              "id": "cce61206-c0f2-4a2e-ba2f-fe3bf362f58f",
+              "name": "message",
+              "value": "={{ $('Dados').item.json.message }}",
+              "type": "string"
+            },
+            {
+              "id": "36421f1c-74ba-4272-b3e8-fc348a363c94",
+              "name": "text",
+              "value": "={{ $json._data.Message.extendedTextMessage.text }}",
+              "type": "string"
+            },
+            {
+              "id": "0ba652c6-6e1e-4143-9e0f-e50edabfc368",
+              "name": "TimeStamp",
+              "value": "={{ $json._data.Info.Timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        -160
+      ],
+      "id": "6424d775-6ea2-4475-a038-eaba57de5e7f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "=data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        -160
+      ],
+      "id": "85d96bf7-f962-4a8a-ae0b-a4b5d4ee010e",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/files/teste.xlsx",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1248,
+        -160
+      ],
+      "id": "08af8aca-d3e1-4408-b5c0-787cbc636554",
+      "name": "Read/Write Files from Disk"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "accept": "application/json, text/plain, */*",
+            "content-type": "application/json",
+            "user-agent": "WAHA/2026.2.1",
+            "x-webhook-request-id": "1a8fil7mle5tegm",
+            "x-webhook-timestamp": "1770580335478",
+            "content-length": "2628",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "host": "host.docker.internal:5678",
+            "connection": "keep-alive"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "id": "evt_01kgzczpvp7cq7jdpryce35k50",
+            "timestamp": 1770580335478,
+            "event": "message",
+            "session": "default",
+            "me": {
+              "id": "5521990453984@c.us",
+              "pushName": "Wp Seek",
+              "lid": "49762195755164@lid",
+              "jid": "5521990453984:1@s.whatsapp.net"
+            },
+            "payload": {
+              "id": "false_257998819704852@lid_3EB00C884DB6EC12DBDB37",
+              "timestamp": 1770580336,
+              "from": "257998819704852@lid",
+              "fromMe": false,
+              "source": "app",
+              "body": "traduza DAta automation analyst",
+              "to": null,
+              "participant": null,
+              "hasMedia": false,
+              "media": null,
+              "ack": 2,
+              "location": null,
+              "vCards": null,
+              "ackName": "DEVICE",
+              "replyTo": null,
+              "_data": {
+                "Info": {
+                  "Chat": "257998819704852@lid",
+                  "Sender": "257998819704852:44@lid",
+                  "IsFromMe": false,
+                  "IsGroup": false,
+                  "AddressingMode": "",
+                  "SenderAlt": "5521985023014:44@s.whatsapp.net",
+                  "RecipientAlt": "",
+                  "BroadcastListOwner": "",
+                  "BroadcastRecipients": null,
+                  "ID": "3EB00C884DB6EC12DBDB37",
+                  "ServerID": 0,
+                  "Type": "text",
+                  "PushName": "Walter Junior",
+                  "Timestamp": "2026-02-08T19:52:16Z",
+                  "Category": "",
+                  "Multicast": false,
+                  "MediaType": "",
+                  "Edit": "",
+                  "MsgBotInfo": {
+                    "EditType": "",
+                    "EditTargetID": "",
+                    "EditSenderTimestampMS": "0001-01-01T00:00:00Z"
+                  },
+                  "MsgMetaInfo": {
+                    "TargetID": "",
+                    "TargetSender": "",
+                    "TargetChat": "",
+                    "DeprecatedLIDSession": null,
+                    "ThreadMessageID": "",
+                    "ThreadMessageSenderJID": ""
+                  },
+                  "VerifiedName": null,
+                  "DeviceSentMeta": null
+                },
+                "Message": {
+                  "conversation": "traduza DAta automation analyst",
+                  "messageContextInfo": {
+                    "deviceListMetadata": {
+                      "senderKeyHash": "SrzkVvQicoa5Ew==",
+                      "senderTimestamp": 1770491409,
+                      "senderAccountType": 0,
+                      "receiverAccountType": 0,
+                      "recipientKeyHash": "YB7JoMVuCZXEng==",
+                      "recipientTimestamp": 1770493653
+                    },
+                    "deviceListMetadataVersion": 2,
+                    "messageSecret": "50r1dPFpZAWQoreF4MOv2xXdrlnXFWOJUn2QGRyaIyA=",
+                    "limitSharingV2": {
+                      "sharingLimited": false,
+                      "trigger": 0,
+                      "limitSharingSettingTimestamp": 0,
+                      "initiatedByMe": false
+                    }
+                  }
+                },
+                "IsEphemeral": false,
+                "IsViewOnce": false,
+                "IsViewOnceV2": false,
+                "IsViewOnceV2Extension": false,
+                "IsDocumentWithCaption": false,
+                "IsLottieSticker": false,
+                "IsBotInvoke": false,
+                "IsEdit": false,
+                "SourceWebMsg": null,
+                "UnavailableRequestID": "",
+                "RetryCount": 0,
+                "NewsletterMeta": null,
+                "RawMessage": {
+                  "conversation": "traduza DAta automation analyst",
+                  "messageContextInfo": {
+                    "deviceListMetadata": {
+                      "senderKeyHash": "SrzkVvQicoa5Ew==",
+                      "senderTimestamp": 1770491409,
+                      "senderAccountType": 0,
+                      "receiverAccountType": 0,
+                      "recipientKeyHash": "YB7JoMVuCZXEng==",
+                      "recipientTimestamp": 1770493653
+                    },
+                    "deviceListMetadataVersion": 2,
+                    "messageSecret": "50r1dPFpZAWQoreF4MOv2xXdrlnXFWOJUn2QGRyaIyA=",
+                    "limitSharingV2": {
+                      "sharingLimited": false,
+                      "trigger": 0,
+                      "limitSharingSettingTimestamp": 0,
+                      "initiatedByMe": false
+                    }
+                  }
+                },
+                "Status": 3
+              }
+            },
+            "environment": {
+              "version": "2026.2.1",
+              "engine": "GOWS",
+              "tier": "CORE",
+              "browser": null,
+              "platform": "linux/x64",
+              "worker": {
+                "id": null
+              }
+            }
+          },
+          "webhookUrl": "http://host.docker.internal:5678/webhook/webhook",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Dados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Seen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Seen": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "faf1e213-4edc-40bb-8ba8-4a665fee9fef",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9af61ca4130fd6933642ebebc84a29c15d784168a9fdb8ba6b9e41ab5b55c89a"
+  },
+  "id": "4KKQ7x8FLRk2oDsELPZ2T",
+  "tags": []
+}
